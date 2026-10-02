@@ -1,0 +1,2254 @@
+<!doctype html>
+<html lang="hi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SwiftDrop — Parcel Delivery</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #0c0c0f;
+        --surface: #16161c;
+        --surface2: #1e1e28;
+        --border: rgba(255, 255, 255, 0.08);
+        --border2: rgba(255, 255, 255, 0.14);
+        --accent: #f97316;
+        --accent2: #fb923c;
+        --green: #22c55e;
+        --blue: #3b82f6;
+        --red: #ef4444;
+        --yellow: #eab308;
+        --text: #f1f0ed;
+        --text2: #9d9b96;
+        --text3: #5a5855;
+        --radius: 12px;
+        --radius-lg: 18px;
+        --radius-xl: 24px;
+      }
+
+      body {
+        font-family: "Space Grotesk", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* ── TOP NAV ── */
+      .topnav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+      .logo {
+        font-family: "Syne", sans-serif;
+        font-weight: 800;
+        font-size: 1.4rem;
+        letter-spacing: -0.5px;
+        color: var(--text);
+      }
+      .logo span {
+        color: var(--accent);
+      }
+
+      .role-toggle {
+        display: flex;
+        background: var(--surface);
+        border-radius: 999px;
+        padding: 4px;
+        border: 1px solid var(--border);
+        gap: 4px;
+      }
+      .role-btn {
+        padding: 6px 18px;
+        border-radius: 999px;
+        border: none;
+        background: transparent;
+        color: var(--text2);
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 0.82rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .role-btn.active {
+        background: var(--accent);
+        color: #fff;
+      }
+
+      /* ── SCREENS ── */
+      .screen {
+        display: none;
+      }
+      .screen.active {
+        display: block;
+      }
+
+      /* ── USER SCREEN ── */
+      .user-layout {
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        min-height: calc(100vh - 57px);
+      }
+
+      .sidebar {
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+        padding: 1.5rem;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+      }
+
+      .section-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--text3);
+        margin-bottom: 0.5rem;
+      }
+
+      .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .input-wrapper {
+        position: relative;
+      }
+      .input-wrapper .dot {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+      .dot.pickup {
+        background: var(--green);
+      }
+      .dot.dropoff {
+        background: var(--accent);
+      }
+      .input-wrapper .line-connector {
+        position: absolute;
+        left: 18px;
+        top: 100%;
+        width: 2px;
+        height: 10px;
+        background: var(--border2);
+      }
+
+      .addr-input {
+        width: 100%;
+        padding: 12px 14px 12px 36px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--text);
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 0.88rem;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .addr-input:focus {
+        border-color: var(--accent);
+      }
+      .addr-input::placeholder {
+        color: var(--text3);
+      }
+
+      /* Category cards */
+      .category-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+      .cat-card {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 12px 8px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .cat-card:hover {
+        border-color: var(--border2);
+      }
+      .cat-card.selected {
+        border-color: var(--accent);
+        background: rgba(249, 115, 22, 0.1);
+      }
+      .cat-icon {
+        font-size: 1.5rem;
+        margin-bottom: 4px;
+      }
+      .cat-name {
+        font-size: 0.72rem;
+        color: var(--text2);
+        font-weight: 500;
+      }
+      .cat-card.selected .cat-name {
+        color: var(--accent);
+      }
+
+      /* Priority pills */
+      .pill-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .pill {
+        padding: 6px 14px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: var(--surface2);
+        font-size: 0.78rem;
+        color: var(--text2);
+        cursor: pointer;
+        transition: all 0.18s;
+        font-family: "Space Grotesk", sans-serif;
+      }
+      .pill:hover {
+        border-color: var(--border2);
+        color: var(--text);
+      }
+      .pill.selected {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: rgba(249, 115, 22, 0.08);
+      }
+
+      /* Price card */
+      .price-card {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.1rem;
+      }
+      .price-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .price-label {
+        font-size: 0.8rem;
+        color: var(--text2);
+      }
+      .price-value {
+        font-size: 0.88rem;
+        font-weight: 500;
+      }
+      .price-total {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .divider {
+        height: 1px;
+        background: var(--border);
+        margin: 10px 0;
+      }
+
+      .btn-primary {
+        width: 100%;
+        padding: 14px;
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        border-radius: var(--radius);
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        letter-spacing: 0.2px;
+      }
+      .btn-primary:hover {
+        background: var(--accent2);
+        transform: translateY(-1px);
+      }
+      .btn-primary:active {
+        transform: translateY(0);
+      }
+
+      /* ── MAP AREA ── */
+      .map-area {
+        position: relative;
+        background: #111118;
+        overflow: hidden;
+      }
+      #map-canvas {
+        width: 100%;
+        height: 100%;
+        min-height: 500px;
+      }
+
+      /* SVG Map Simulation */
+      .map-svg {
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Tracking overlay */
+      .tracking-overlay {
+        position: absolute;
+        bottom: 1.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xl);
+        padding: 1rem 1.5rem;
+        min-width: 320px;
+        display: none;
+        backdrop-filter: blur(10px);
+      }
+      .tracking-overlay.show {
+        display: block;
+      }
+      .track-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+      }
+      .track-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--green);
+        animation: pulse 1.5s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.5;
+          transform: scale(1.4);
+        }
+      }
+      .status-text {
+        font-size: 0.82rem;
+        color: var(--green);
+        font-weight: 600;
+      }
+      .eta-badge {
+        background: rgba(234, 179, 8, 0.15);
+        color: var(--yellow);
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(234, 179, 8, 0.3);
+      }
+
+      .track-progress {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        margin-bottom: 1rem;
+      }
+      .track-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1;
+      }
+      .step-circle {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 700;
+        border: 2px solid var(--border);
+        background: var(--surface2);
+        color: var(--text3);
+        position: relative;
+        z-index: 1;
+      }
+      .step-circle.done {
+        background: var(--green);
+        border-color: var(--green);
+        color: #fff;
+      }
+      .step-circle.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .step-label {
+        font-size: 0.65rem;
+        color: var(--text3);
+        margin-top: 4px;
+        text-align: center;
+      }
+      .step-label.done,
+      .step-label.active {
+        color: var(--text2);
+      }
+      .step-line {
+        flex: 1;
+        height: 2px;
+        background: var(--border);
+        margin-top: -14px;
+      }
+      .step-line.done {
+        background: var(--green);
+      }
+
+      .driver-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border);
+      }
+      .driver-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f97316, #fb923c);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: #fff;
+      }
+      .driver-details {
+        flex: 1;
+      }
+      .driver-name {
+        font-size: 0.88rem;
+        font-weight: 600;
+      }
+      .driver-sub {
+        font-size: 0.72rem;
+        color: var(--text2);
+        margin-top: 2px;
+      }
+      .rating {
+        font-size: 0.78rem;
+        color: var(--yellow);
+        font-weight: 600;
+      }
+
+      /* ── DRIVER SCREEN ── */
+      .driver-layout {
+        display: grid;
+        grid-template-columns: 1fr 360px;
+        min-height: calc(100vh - 57px);
+      }
+
+      .driver-map {
+        position: relative;
+        background: #0d0d14;
+        overflow: hidden;
+      }
+
+      .driver-panel {
+        background: var(--surface);
+        border-left: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+
+      .driver-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .driver-greeting {
+        font-size: 0.82rem;
+        color: var(--text2);
+      }
+      .driver-name-big {
+        font-family: "Syne", sans-serif;
+        font-size: 1.15rem;
+        font-weight: 700;
+      }
+
+      .online-toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .toggle-switch {
+        position: relative;
+        width: 48px;
+        height: 26px;
+      }
+      .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .toggle-track {
+        position: absolute;
+        inset: 0;
+        background: var(--surface2);
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        cursor: pointer;
+        transition: background 0.25s;
+      }
+      .toggle-track::before {
+        content: "";
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--text3);
+        top: 3px;
+        left: 3px;
+        transition:
+          transform 0.25s,
+          background 0.25s;
+      }
+      .toggle-switch input:checked + .toggle-track {
+        background: var(--green);
+        border-color: var(--green);
+      }
+      .toggle-switch input:checked + .toggle-track::before {
+        transform: translateX(22px);
+        background: #fff;
+      }
+      .toggle-label {
+        font-size: 0.78rem;
+        color: var(--text2);
+      }
+
+      /* Stats row */
+      .stats-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1px;
+        background: var(--border);
+        border-bottom: 1px solid var(--border);
+      }
+      .stat-cell {
+        background: var(--surface);
+        padding: 1rem;
+        text-align: center;
+      }
+      .stat-num {
+        font-size: 1.35rem;
+        font-weight: 700;
+        font-family: "Syne", sans-serif;
+      }
+      .stat-lbl {
+        font-size: 0.68rem;
+        color: var(--text3);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 2px;
+      }
+
+      /* Requests */
+      .requests-section {
+        padding: 1.25rem 1.5rem;
+        flex: 1;
+      }
+
+      .request-card {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.1rem;
+        margin-bottom: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+        overflow: hidden;
+      }
+      .request-card::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--accent);
+        border-radius: 3px 0 0 3px;
+      }
+      .request-card.urgent::before {
+        background: var(--red);
+      }
+      .request-card:hover {
+        border-color: var(--border2);
+        transform: translateX(3px);
+      }
+
+      .req-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+      }
+      .req-id {
+        font-size: 0.72rem;
+        color: var(--text3);
+      }
+      .req-badge {
+        font-size: 0.68rem;
+        padding: 3px 8px;
+        border-radius: 999px;
+        font-weight: 600;
+      }
+      .badge-doc {
+        background: rgba(59, 130, 246, 0.15);
+        color: var(--blue);
+        border: 1px solid rgba(59, 130, 246, 0.25);
+      }
+      .badge-food {
+        background: rgba(34, 197, 94, 0.15);
+        color: var(--green);
+        border: 1px solid rgba(34, 197, 94, 0.25);
+      }
+      .badge-elec {
+        background: rgba(234, 179, 8, 0.15);
+        color: var(--yellow);
+        border: 1px solid rgba(234, 179, 8, 0.25);
+      }
+
+      .req-addresses {
+        margin-bottom: 0.75rem;
+      }
+      .req-addr-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+      .addr-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .addr-text {
+        font-size: 0.8rem;
+        color: var(--text2);
+      }
+
+      .req-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .req-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.75rem;
+        color: var(--text2);
+      }
+
+      .req-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 0.85rem;
+      }
+      .btn-accept {
+        flex: 1;
+        padding: 9px;
+        background: var(--green);
+        color: #fff;
+        border: none;
+        border-radius: var(--radius);
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.18s;
+      }
+      .btn-accept:hover {
+        opacity: 0.9;
+      }
+      .btn-decline {
+        padding: 9px 14px;
+        background: transparent;
+        color: var(--text2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 0.82rem;
+        cursor: pointer;
+        transition: all 0.18s;
+      }
+      .btn-decline:hover {
+        border-color: var(--red);
+        color: var(--red);
+      }
+
+      /* Active delivery card */
+      .active-delivery {
+        margin: 0 1.5rem 1rem;
+        background: rgba(249, 115, 22, 0.08);
+        border: 1px solid rgba(249, 115, 22, 0.25);
+        border-radius: var(--radius-lg);
+        padding: 1.1rem;
+        display: none;
+      }
+      .active-delivery.show {
+        display: block;
+      }
+      .active-del-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+      }
+      .active-del-title {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .nav-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        border-radius: var(--radius);
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .del-route {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .del-route-step {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .route-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .route-icon.pick {
+        background: rgba(34, 197, 94, 0.15);
+        color: var(--green);
+      }
+      .route-icon.drop {
+        background: rgba(249, 115, 22, 0.15);
+        color: var(--accent);
+      }
+      .route-text {
+        font-size: 0.8rem;
+      }
+      .route-label {
+        font-size: 0.68rem;
+        color: var(--text3);
+      }
+
+      /* Notification toast */
+      .toast {
+        position: fixed;
+        top: 80px;
+        right: 1.5rem;
+        background: var(--surface);
+        border: 1px solid var(--border2);
+        border-radius: var(--radius-lg);
+        padding: 1rem 1.25rem;
+        min-width: 280px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        transform: translateX(120%);
+        transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        z-index: 200;
+      }
+      .toast.show {
+        transform: translateX(0);
+      }
+      .toast-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+      .toast-icon {
+        font-size: 1rem;
+      }
+      .toast-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+      .toast-msg {
+        font-size: 0.78rem;
+        color: var(--text2);
+      }
+
+      /* Map SVG roads */
+      .road {
+        stroke: #1e2030;
+        stroke-width: 12;
+        fill: none;
+        stroke-linecap: round;
+      }
+      .road-main {
+        stroke: #22243a;
+        stroke-width: 20;
+      }
+      .road-label {
+        fill: #2a2c42;
+        font-size: 9px;
+        font-family: "Space Grotesk";
+      }
+
+      /* Animated driver marker */
+      .driver-marker {
+        filter: drop-shadow(0 4px 8px rgba(249, 115, 22, 0.6));
+      }
+
+      @keyframes markerBounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-4px);
+        }
+      }
+      .driver-marker-group {
+        animation: markerBounce 2s ease-in-out infinite;
+      }
+
+      @keyframes routeDash {
+        to {
+          stroke-dashoffset: -20;
+        }
+      }
+      .route-dashed {
+        stroke-dasharray: 8 5;
+        animation: routeDash 1s linear infinite;
+      }
+
+      /* ── NOTIFICATION BADGE ── */
+      .notif-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        width: 18px;
+        height: 18px;
+        background: var(--red);
+        border-radius: 50%;
+        font-size: 0.65rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        animation: pulse 1.5s infinite;
+      }
+
+      /* ── RESPONSIVE ── */
+      @media (max-width: 900px) {
+        .user-layout {
+          grid-template-columns: 1fr;
+        }
+        .driver-layout {
+          grid-template-columns: 1fr;
+        }
+        .map-area,
+        .driver-map {
+          min-height: 300px;
+        }
+        .sidebar,
+        .driver-panel {
+          border: none;
+        }
+      }
+
+      /* ── ORDER PLACED STATE ── */
+      .finding-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(12, 12, 15, 0.85);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+        display: none;
+        z-index: 10;
+      }
+      .finding-overlay.show {
+        display: flex;
+      }
+      .spinner {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        border: 3px solid var(--border);
+        border-top-color: var(--accent);
+        animation: spin 0.9s linear infinite;
+        margin-bottom: 1rem;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .finding-text {
+        font-size: 0.95rem;
+        font-weight: 500;
+      }
+      .finding-sub {
+        font-size: 0.78rem;
+        color: var(--text2);
+        margin-top: 4px;
+      }
+
+      /* ── scrollbar ── */
+      ::-webkit-scrollbar {
+        width: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--border2);
+        border-radius: 99px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- TOP NAV -->
+    <nav class="topnav">
+      <div class="logo">Swift<span>Drop</span></div>
+      <div class="role-toggle">
+        <button class="role-btn active" onclick="switchRole('user')">
+          📦 User
+        </button>
+        <button class="role-btn" onclick="switchRole('driver')">
+          🏍️ Driver
+        </button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px">
+        <div style="position: relative">
+          <div
+            style="
+              width: 34px;
+              height: 34px;
+              border-radius: 50%;
+              background: var(--surface2);
+              border: 1px solid var(--border);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 0.85rem;
+              cursor: pointer;
+            "
+          >
+            🔔
+          </div>
+          <div class="notif-badge" id="notif-count">2</div>
+        </div>
+        <div
+          style="
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f97316, #fb923c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+          "
+        >
+          RK
+        </div>
+      </div>
+    </nav>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast">
+      <div class="toast-top">
+        <span class="toast-icon">🔔</span>
+        <span class="toast-title" id="toast-title">Notification</span>
+      </div>
+      <p class="toast-msg" id="toast-msg">Message here</p>
+    </div>
+
+    <!-- ═══════════ USER SCREEN ═══════════ -->
+    <div class="screen active" id="user-screen">
+      <div class="user-layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+          <!-- Pickup / Drop -->
+          <div>
+            <div class="section-label">Delivery Route</div>
+            <div class="input-group">
+              <div class="input-wrapper">
+                <div class="dot pickup"></div>
+                <input
+                  class="addr-input"
+                  id="pickup-addr"
+                  type="text"
+                  placeholder="Pickup address..."
+                  value="Dharampeth, Nagpur - 440010"
+                />
+                <div class="line-connector"></div>
+              </div>
+              <div class="input-wrapper">
+                <div class="dot dropoff"></div>
+                <input
+                  class="addr-input"
+                  id="drop-addr"
+                  type="text"
+                  placeholder="Drop-off address..."
+                  value="Sitabuldi, Nagpur - 440012"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Parcel Category -->
+          <div>
+            <div class="section-label">Parcel Category</div>
+            <div class="category-grid">
+              <div
+                class="cat-card selected"
+                onclick="selectCat(this, 'document')"
+              >
+                <div class="cat-icon">📄</div>
+                <div class="cat-name">Document</div>
+              </div>
+              <div class="cat-card" onclick="selectCat(this, 'food')">
+                <div class="cat-icon">🍱</div>
+                <div class="cat-name">Food</div>
+              </div>
+              <div class="cat-card" onclick="selectCat(this, 'electronics')">
+                <div class="cat-icon">📱</div>
+                <div class="cat-name">Electronics</div>
+              </div>
+              <div class="cat-card" onclick="selectCat(this, 'clothing')">
+                <div class="cat-icon">👕</div>
+                <div class="cat-name">Clothing</div>
+              </div>
+              <div class="cat-card" onclick="selectCat(this, 'medicine')">
+                <div class="cat-icon">💊</div>
+                <div class="cat-name">Medicine</div>
+              </div>
+              <div class="cat-card" onclick="selectCat(this, 'other')">
+                <div class="cat-icon">📦</div>
+                <div class="cat-name">Other</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Priority -->
+          <div>
+            <div class="section-label">Delivery Speed</div>
+            <div class="pill-group">
+              <div class="pill selected" onclick="selectPill(this, 'standard')">
+                Standard (4–6 hrs)
+              </div>
+              <div class="pill" onclick="selectPill(this, 'express')">
+                ⚡ Express (2 hrs)
+              </div>
+              <div class="pill" onclick="selectPill(this, 'urgent')">
+                🔥 Urgent (45 min)
+              </div>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div>
+            <div class="section-label">Special Instructions</div>
+            <textarea
+              class="addr-input"
+              rows="2"
+              placeholder="E.g. Handle with care, call before delivery..."
+              style="resize: none; padding-top: 10px"
+            ></textarea>
+          </div>
+
+          <!-- Price -->
+          <div class="price-card" id="price-card">
+            <div class="price-row">
+              <span class="price-label">Base fare</span>
+              <span class="price-value" id="base-fare">₹49</span>
+            </div>
+            <div class="price-row">
+              <span class="price-label">Distance (4.2 km)</span>
+              <span class="price-value" id="dist-fare">₹21</span>
+            </div>
+            <div class="price-row">
+              <span class="price-label">Category surcharge</span>
+              <span class="price-value" id="cat-fare">₹0</span>
+            </div>
+            <div class="divider"></div>
+            <div class="price-row">
+              <span
+                class="price-label"
+                style="font-weight: 600; color: var(--text)"
+                >Total Estimate</span
+              >
+              <span class="price-total" id="total-fare">₹70</span>
+            </div>
+          </div>
+
+          <button class="btn-primary" id="book-btn" onclick="bookDelivery()">
+            🚀 Book Delivery
+          </button>
+        </aside>
+
+        <!-- MAP PANEL -->
+        <div class="map-area" id="user-map-area">
+          <svg
+            class="map-svg"
+            viewBox="0 0 700 600"
+            xmlns="http://www.w3.org/2000/svg"
+            id="user-map-svg"
+          >
+            <!-- Background -->
+            <rect width="700" height="600" fill="#0d0d18" />
+            <!-- Grid -->
+            <defs>
+              <pattern
+                id="grid"
+                width="40"
+                height="40"
+                patternUnits="userSpaceOnUse"
+              >
+                <path
+                  d="M 40 0 L 0 0 0 40"
+                  fill="none"
+                  stroke="#14141f"
+                  stroke-width="0.5"
+                />
+              </pattern>
+            </defs>
+            <rect width="700" height="600" fill="url(#grid)" />
+
+            <!-- Roads -->
+            <line class="road-main" x1="0" y1="300" x2="700" y2="300" />
+            <line class="road-main" x1="350" y1="0" x2="350" y2="600" />
+            <line class="road" x1="0" y1="150" x2="700" y2="150" />
+            <line class="road" x1="0" y1="450" x2="700" y2="450" />
+            <line class="road" x1="175" y1="0" x2="175" y2="600" />
+            <line class="road" x1="525" y1="0" x2="525" y2="600" />
+            <line class="road" x1="50" y1="0" x2="700" y2="400" />
+            <line class="road" x1="0" y1="200" x2="600" y2="600" />
+
+            <!-- City blocks -->
+            <rect
+              x="30"
+              y="30"
+              width="120"
+              height="100"
+              rx="4"
+              fill="#131320"
+              stroke="#1a1a2e"
+              stroke-width="1"
+            />
+            <rect
+              x="200"
+              y="30"
+              width="120"
+              height="100"
+              rx="4"
+              fill="#131320"
+              stroke="#1a1a2e"
+              stroke-width="1"
+            />
+            <rect
+              x="390"
+              y="30"
+              width="100"
+              height="80"
+              rx="4"
+              fill="#131320"
+              stroke="#1a1a2e"
+              stroke-width="1"
+            />
+            <rect
+              x="520"
+              y="30"
+              width="160"
+              height="100"
+              rx="4"
+              fill="#131320"
+              stroke="#1a1a2e"
+              stroke-width="1"
+            />
+            <rect
+              x="30"
+              y="165"
+              width="120"
+              height="110"
+              rx="4"
+              fill="#131320"
+              stroke="#1a1a2e"
+              stroke-width="1"
+            />
+            <rect
+              x="200"
+              y="165"
+              width="120"
+              height="110"
+              rx="4"
+              fill="#131320"
+              stroke="#1a1a2e"
+              stroke-width="1"
+            />
+            <rect
+              x="390"
+              y="165"
+              width="100"
+              height="110"
+              rx="4"
+              fill="#131320"
+              stroke="#1a1a2e"
+              stroke-width="1"
+            />
+            <rect
+              x="540"
+              y="165"
+              width="140"
+              height="110"
+              rx="4"
+              fill="#131320"
+              stroke="#1a1a2e"
+              stroke-width="1"
+            />
+            <rect
+              x="30"
+              y="315"
+              width="120"
+              height="110"
+              rx="4"
+              fill="#131320"
+              stroke="#1a1a2e"
+              stroke-width="1"
+            />
+            <rect
+              x="200"
+              y="315"
+              width="120"
+              height="110"
+              rx="4"
+              fill="#131320"
+              stroke="#1a1a2e"
+              stroke-width="1"
+            />
+            <rect
+              x="390"
+              y="315"
+              width="100"
+              height="110"
+              rx="4"
+              fill="#131320"
+              stroke="#1a1a2e"
+              stroke-width="1"
+            />
+            <rect
+              x="540"
+              y="315"
+              width="140"
+              height="110"
+              rx="4"
+              fill="#131320"
+              stroke="#1a1a2e"
+              stroke-width="1"
+            />
+            <rect
+              x="30"
+              y="465"
+              width="120"
+              height="110"
+              rx="4"
+              fill="#131320"
+              stroke="#1a1a2e"
+              stroke-width="1"
+            />
+            <rect
+              x="200"
+              y="465"
+              width="120"
+              height="110"
+              rx="4"
+              fill="#131320"
+              stroke="#1a1a2e"
+              stroke-width="1"
+            />
+            <rect
+              x="390"
+              y="465"
+              width="100"
+              height="110"
+              rx="4"
+              fill="#131320"
+              stroke="#1a1a2e"
+              stroke-width="1"
+            />
+            <rect
+              x="540"
+              y="465"
+              width="140"
+              height="110"
+              rx="4"
+              fill="#131320"
+              stroke="#1a1a2e"
+              stroke-width="1"
+            />
+
+            <!-- Route line (dashed) -->
+            <path
+              id="route-path"
+              d="M 160 430 Q 250 350 350 300 Q 450 250 520 170"
+              fill="none"
+              stroke="#f97316"
+              stroke-width="3"
+              opacity="0.8"
+              class="route-dashed"
+              stroke-dasharray="8 5"
+            />
+
+            <!-- Pickup marker -->
+            <g id="pickup-marker" transform="translate(160,430)">
+              <circle
+                r="16"
+                fill="rgba(34,197,94,0.2)"
+                stroke="#22c55e"
+                stroke-width="1.5"
+              />
+              <circle r="6" fill="#22c55e" />
+              <text
+                y="-24"
+                text-anchor="middle"
+                font-family="Space Grotesk"
+                font-size="10"
+                fill="#22c55e"
+                font-weight="600"
+              >
+                PICKUP
+              </text>
+              <text
+                y="-13"
+                text-anchor="middle"
+                font-family="Space Grotesk"
+                font-size="8"
+                fill="#9d9b96"
+              >
+                Dharampeth
+              </text>
+            </g>
+
+            <!-- Dropoff marker -->
+            <g id="dropoff-marker" transform="translate(520,170)">
+              <circle
+                r="16"
+                fill="rgba(249,115,22,0.2)"
+                stroke="#f97316"
+                stroke-width="1.5"
+              />
+              <circle r="6" fill="#f97316" />
+              <text
+                y="-24"
+                text-anchor="middle"
+                font-family="Space Grotesk"
+                font-size="10"
+                fill="#f97316"
+                font-weight="600"
+              >
+                DROP
+              </text>
+              <text
+                y="-13"
+                text-anchor="middle"
+                font-family="Space Grotesk"
+                font-size="8"
+                fill="#9d9b96"
+              >
+                Sitabuldi
+              </text>
+            </g>
+
+            <!-- Driver marker (hidden initially) -->
+            <g
+              id="driver-on-map"
+              transform="translate(200,390)"
+              style="display: none"
+            >
+              <g class="driver-marker-group">
+                <circle
+                  r="20"
+                  fill="rgba(249,115,22,0.15)"
+                  stroke="#f97316"
+                  stroke-width="1.5"
+                />
+                <circle r="10" fill="#f97316" />
+                <text y="4" text-anchor="middle" font-size="10">🏍️</text>
+              </g>
+              <circle
+                r="28"
+                fill="none"
+                stroke="#f97316"
+                stroke-width="1"
+                opacity="0.3"
+              >
+                <animate
+                  attributeName="r"
+                  values="20;36;20"
+                  dur="2s"
+                  repeatCount="indefinite"
+                />
+                <animate
+                  attributeName="opacity"
+                  values="0.5;0;0.5"
+                  dur="2s"
+                  repeatCount="indefinite"
+                />
+              </circle>
+            </g>
+
+            <!-- Distance label -->
+            <rect
+              x="285"
+              y="278"
+              width="120"
+              height="36"
+              rx="8"
+              fill="#1e1e28"
+              stroke="#2a2a3a"
+              stroke-width="1"
+            />
+            <text
+              x="345"
+              y="294"
+              text-anchor="middle"
+              font-family="Space Grotesk"
+              font-size="9"
+              fill="#9d9b96"
+            >
+              DISTANCE
+            </text>
+            <text
+              x="345"
+              y="307"
+              text-anchor="middle"
+              font-family="Space Grotesk"
+              font-size="11"
+              fill="#f1f0ed"
+              font-weight="600"
+            >
+              4.2 km · ~18 min
+            </text>
+          </svg>
+
+          <!-- Finding driver overlay -->
+          <div class="finding-overlay" id="finding-overlay">
+            <div class="spinner"></div>
+            <div class="finding-text">Finding nearby drivers...</div>
+            <div class="finding-sub">
+              Please wait, matching you with the best driver
+            </div>
+          </div>
+
+          <!-- Tracking card -->
+          <div class="tracking-overlay" id="tracking-overlay">
+            <div class="track-header">
+              <div class="track-status">
+                <div class="status-dot"></div>
+                <span class="status-text" id="track-status-text"
+                  >Driver On The Way</span
+                >
+              </div>
+              <div class="eta-badge" id="eta-badge">ETA: 12 min</div>
+            </div>
+            <!-- Progress steps -->
+            <div class="track-progress">
+              <div class="track-step">
+                <div class="step-circle done" id="step1">✓</div>
+                <div class="step-label done">Booked</div>
+              </div>
+              <div class="step-line done" id="line1"></div>
+              <div class="track-step">
+                <div class="step-circle active" id="step2">2</div>
+                <div class="step-label active">Pickup</div>
+              </div>
+              <div class="step-line" id="line2"></div>
+              <div class="track-step">
+                <div class="step-circle" id="step3">3</div>
+                <div class="step-label">Transit</div>
+              </div>
+              <div class="step-line" id="line3"></div>
+              <div class="track-step">
+                <div class="step-circle" id="step4">4</div>
+                <div class="step-label">Delivered</div>
+              </div>
+            </div>
+            <!-- Driver info -->
+            <div class="driver-info">
+              <div class="driver-avatar">RV</div>
+              <div class="driver-details">
+                <div class="driver-name">Rahul Verma</div>
+                <div class="driver-sub">Honda Activa · MH-31 AB 1234</div>
+              </div>
+              <div class="rating">⭐ 4.9</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ DRIVER SCREEN ═══════════ -->
+    <div class="screen" id="driver-screen">
+      <div class="driver-layout">
+        <!-- DRIVER MAP -->
+        <div class="driver-map">
+          <svg
+            class="map-svg"
+            viewBox="0 0 700 600"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <rect width="700" height="600" fill="#0a0a14" />
+            <rect width="700" height="600" fill="url(#grid)" />
+            <!-- Roads -->
+            <line class="road-main" x1="0" y1="300" x2="700" y2="300" />
+            <line class="road-main" x1="350" y1="0" x2="350" y2="600" />
+            <line class="road" x1="0" y1="150" x2="700" y2="150" />
+            <line class="road" x1="0" y1="450" x2="700" y2="450" />
+            <line class="road" x1="175" y1="0" x2="175" y2="600" />
+            <line class="road" x1="525" y1="0" x2="525" y2="600" />
+            <!-- Blocks -->
+            <rect
+              x="30"
+              y="30"
+              width="120"
+              height="100"
+              rx="4"
+              fill="#0e0e1a"
+              stroke="#16162a"
+              stroke-width="1"
+            />
+            <rect
+              x="200"
+              y="30"
+              width="120"
+              height="100"
+              rx="4"
+              fill="#0e0e1a"
+              stroke="#16162a"
+              stroke-width="1"
+            />
+            <rect
+              x="390"
+              y="30"
+              width="100"
+              height="80"
+              rx="4"
+              fill="#0e0e1a"
+              stroke="#16162a"
+              stroke-width="1"
+            />
+            <rect
+              x="520"
+              y="30"
+              width="160"
+              height="100"
+              rx="4"
+              fill="#0e0e1a"
+              stroke="#16162a"
+              stroke-width="1"
+            />
+            <rect
+              x="30"
+              y="165"
+              width="120"
+              height="110"
+              rx="4"
+              fill="#0e0e1a"
+              stroke="#16162a"
+              stroke-width="1"
+            />
+            <rect
+              x="200"
+              y="165"
+              width="120"
+              height="110"
+              rx="4"
+              fill="#0e0e1a"
+              stroke="#16162a"
+              stroke-width="1"
+            />
+            <rect
+              x="390"
+              y="165"
+              width="100"
+              height="110"
+              rx="4"
+              fill="#0e0e1a"
+              stroke="#16162a"
+              stroke-width="1"
+            />
+            <rect
+              x="540"
+              y="165"
+              width="140"
+              height="110"
+              rx="4"
+              fill="#0e0e1a"
+              stroke="#16162a"
+              stroke-width="1"
+            />
+            <rect
+              x="30"
+              y="315"
+              width="120"
+              height="110"
+              rx="4"
+              fill="#0e0e1a"
+              stroke="#16162a"
+              stroke-width="1"
+            />
+            <rect
+              x="200"
+              y="315"
+              width="120"
+              height="110"
+              rx="4"
+              fill="#0e0e1a"
+              stroke="#16162a"
+              stroke-width="1"
+            />
+            <rect
+              x="390"
+              y="315"
+              width="100"
+              height="110"
+              rx="4"
+              fill="#0e0e1a"
+              stroke="#16162a"
+              stroke-width="1"
+            />
+            <rect
+              x="540"
+              y="315"
+              width="140"
+              height="110"
+              rx="4"
+              fill="#0e0e1a"
+              stroke="#16162a"
+              stroke-width="1"
+            />
+
+            <!-- Driver position -->
+            <g transform="translate(350,300)">
+              <g class="driver-marker-group">
+                <circle
+                  r="24"
+                  fill="rgba(249,115,22,0.2)"
+                  stroke="#f97316"
+                  stroke-width="2"
+                />
+                <circle r="12" fill="#f97316" />
+                <text y="5" text-anchor="middle" font-size="12">🏍️</text>
+              </g>
+              <circle
+                r="36"
+                fill="none"
+                stroke="#f97316"
+                stroke-width="1"
+                opacity="0.3"
+              >
+                <animate
+                  attributeName="r"
+                  values="24;44;24"
+                  dur="2.5s"
+                  repeatCount="indefinite"
+                />
+                <animate
+                  attributeName="opacity"
+                  values="0.4;0;0.4"
+                  dur="2.5s"
+                  repeatCount="indefinite"
+                />
+              </circle>
+            </g>
+
+            <!-- Nearby request indicators -->
+            <g transform="translate(160,180)">
+              <circle
+                r="10"
+                fill="rgba(239,68,68,0.2)"
+                stroke="#ef4444"
+                stroke-width="1.5"
+              />
+              <text y="4" text-anchor="middle" font-size="9">📦</text>
+            </g>
+            <g transform="translate(520,400)">
+              <circle
+                r="10"
+                fill="rgba(59,130,246,0.2)"
+                stroke="#3b82f6"
+                stroke-width="1.5"
+              />
+              <text y="4" text-anchor="middle" font-size="9">📦</text>
+            </g>
+
+            <!-- Speed / nav overlay -->
+            <rect
+              x="20"
+              y="540"
+              width="120"
+              height="46"
+              rx="8"
+              fill="#16161c"
+              stroke="#2a2a3a"
+              stroke-width="1"
+            />
+            <text
+              x="80"
+              y="558"
+              text-anchor="middle"
+              font-family="Space Grotesk"
+              font-size="9"
+              fill="#9d9b96"
+            >
+              SPEED
+            </text>
+            <text
+              x="80"
+              y="574"
+              text-anchor="middle"
+              font-family="Space Grotesk"
+              font-size="14"
+              fill="#f1f0ed"
+              font-weight="700"
+            >
+              0 km/h
+            </text>
+
+            <rect
+              x="280"
+              y="540"
+              width="140"
+              height="46"
+              rx="8"
+              fill="#16161c"
+              stroke="#2a2a3a"
+              stroke-width="1"
+            />
+            <text
+              x="350"
+              y="558"
+              text-anchor="middle"
+              font-family="Space Grotesk"
+              font-size="9"
+              fill="#9d9b96"
+            >
+              CURRENT ZONE
+            </text>
+            <text
+              x="350"
+              y="574"
+              text-anchor="middle"
+              font-family="Space Grotesk"
+              font-size="11"
+              fill="#f1f0ed"
+              font-weight="600"
+            >
+              Civil Lines, NGP
+            </text>
+
+            <rect
+              x="560"
+              y="540"
+              width="120"
+              height="46"
+              rx="8"
+              fill="#16161c"
+              stroke="#2a2a3a"
+              stroke-width="1"
+            />
+            <text
+              x="620"
+              y="558"
+              text-anchor="middle"
+              font-family="Space Grotesk"
+              font-size="9"
+              fill="#9d9b96"
+            >
+              ONLINE
+            </text>
+            <text
+              x="620"
+              y="574"
+              text-anchor="middle"
+              font-family="Space Grotesk"
+              font-size="11"
+              fill="#22c55e"
+              font-weight="600"
+              id="drv-status-map"
+            >
+              Active
+            </text>
+          </svg>
+        </div>
+
+        <!-- DRIVER PANEL -->
+        <div class="driver-panel">
+          <div class="driver-header">
+            <div>
+              <div class="driver-greeting">Good morning 👋</div>
+              <div class="driver-name-big">Rahul Verma</div>
+            </div>
+            <div class="online-toggle">
+              <label class="toggle-switch">
+                <input
+                  type="checkbox"
+                  id="online-toggle"
+                  checked
+                  onchange="toggleOnline(this)"
+                />
+                <span class="toggle-track"></span>
+              </label>
+              <span class="toggle-label" id="online-label">Online</span>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="stats-row">
+            <div class="stat-cell">
+              <div class="stat-num" style="color: var(--green)">₹1,240</div>
+              <div class="stat-lbl">Today's Earning</div>
+            </div>
+            <div class="stat-cell">
+              <div class="stat-num">7</div>
+              <div class="stat-lbl">Deliveries</div>
+            </div>
+            <div class="stat-cell">
+              <div class="stat-num" style="color: var(--yellow)">4.9★</div>
+              <div class="stat-lbl">Rating</div>
+            </div>
+          </div>
+
+          <!-- Active delivery -->
+          <div class="active-delivery" id="active-delivery-card">
+            <div class="active-del-header">
+              <span class="active-del-title">🔴 Active Delivery</span>
+              <button class="nav-btn" onclick="openNav()">🗺️ Navigate</button>
+            </div>
+            <div class="del-route">
+              <div class="del-route-step">
+                <div class="route-icon pick">P</div>
+                <div>
+                  <div class="route-text">Dharampeth, Nagpur</div>
+                  <div class="route-label">PICKUP · 1.2 km away</div>
+                </div>
+              </div>
+              <div
+                style="
+                  width: 1px;
+                  height: 14px;
+                  background: var(--border);
+                  margin-left: 13px;
+                "
+              ></div>
+              <div class="del-route-step">
+                <div class="route-icon drop">D</div>
+                <div>
+                  <div class="route-text">Sitabuldi, Nagpur</div>
+                  <div class="route-label">DROP-OFF · 4.2 km total</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Requests -->
+          <div class="requests-section">
+            <div class="section-label" style="margin-bottom: 0.85rem">
+              New Requests
+            </div>
+
+            <div class="request-card" id="req1">
+              <div class="req-top">
+                <span class="req-id">#SD-2847</span>
+                <span class="req-badge badge-doc">📄 Document</span>
+              </div>
+              <div class="req-addresses">
+                <div class="req-addr-row">
+                  <div class="addr-dot" style="background: var(--green)"></div>
+                  <span class="addr-text">Dharampeth, Nagpur</span>
+                </div>
+                <div class="req-addr-row" style="margin-top: 2px">
+                  <div class="addr-dot" style="background: var(--accent)"></div>
+                  <span class="addr-text">Sitabuldi Main Road</span>
+                </div>
+              </div>
+              <div class="req-meta">
+                <span class="req-meta-item">📍 1.2 km</span>
+                <span class="req-meta-item">⏱️ ~18 min</span>
+                <span class="req-meta-item">💰 ₹70</span>
+              </div>
+              <div class="req-actions">
+                <button class="btn-accept" onclick="acceptDelivery('req1')">
+                  ✓ Accept
+                </button>
+                <button class="btn-decline" onclick="declineDelivery('req1')">
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div class="request-card urgent" id="req2">
+              <div class="req-top">
+                <span class="req-id">#SD-2848</span>
+                <span class="req-badge badge-food">🍱 Food</span>
+              </div>
+              <div class="req-addresses">
+                <div class="req-addr-row">
+                  <div class="addr-dot" style="background: var(--green)"></div>
+                  <span class="addr-text">Sadar, Nagpur</span>
+                </div>
+                <div class="req-addr-row" style="margin-top: 2px">
+                  <div class="addr-dot" style="background: var(--accent)"></div>
+                  <span class="addr-text">Ramdaspeth Colony</span>
+                </div>
+              </div>
+              <div class="req-meta">
+                <span class="req-meta-item">📍 2.8 km</span>
+                <span class="req-meta-item">⚡ URGENT</span>
+                <span class="req-meta-item">💰 ₹120</span>
+              </div>
+              <div class="req-actions">
+                <button class="btn-accept" onclick="acceptDelivery('req2')">
+                  ✓ Accept
+                </button>
+                <button class="btn-decline" onclick="declineDelivery('req2')">
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div class="request-card" id="req3">
+              <div class="req-top">
+                <span class="req-id">#SD-2849</span>
+                <span class="req-badge badge-elec">📱 Electronics</span>
+              </div>
+              <div class="req-addresses">
+                <div class="req-addr-row">
+                  <div class="addr-dot" style="background: var(--green)"></div>
+                  <span class="addr-text">Itwari, Nagpur</span>
+                </div>
+                <div class="req-addr-row" style="margin-top: 2px">
+                  <div class="addr-dot" style="background: var(--accent)"></div>
+                  <span class="addr-text">Bajaj Nagar Square</span>
+                </div>
+              </div>
+              <div class="req-meta">
+                <span class="req-meta-item">📍 5.1 km</span>
+                <span class="req-meta-item">⏱️ ~28 min</span>
+                <span class="req-meta-item">💰 ₹165</span>
+              </div>
+              <div class="req-actions">
+                <button class="btn-accept" onclick="acceptDelivery('req3')">
+                  ✓ Accept
+                </button>
+                <button class="btn-decline" onclick="declineDelivery('req3')">
+                  ✕
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ── STATE ──
+      let selectedCat = "document";
+      let selectedSpeed = "standard";
+      let trackStep = 1;
+      let trackTimer = null;
+      let isOnline = true;
+
+      const catSurcharge = {
+        document: 0,
+        food: 20,
+        electronics: 50,
+        clothing: 15,
+        medicine: 30,
+        other: 10,
+      };
+      const speedMultiplier = { standard: 1, express: 1.5, urgent: 2.2 };
+      const basePrice = 49,
+        distPrice = 21;
+
+      // ── ROLE SWITCH ──
+      function switchRole(role) {
+        document.querySelectorAll(".role-btn").forEach((b, i) => {
+          b.classList.toggle(
+            "active",
+            (i === 0 && role === "user") || (i === 1 && role === "driver"),
+          );
+        });
+        document
+          .getElementById("user-screen")
+          .classList.toggle("active", role === "user");
+        document
+          .getElementById("driver-screen")
+          .classList.toggle("active", role === "driver");
+      }
+
+      // ── CATEGORY SELECT ──
+      function selectCat(el, cat) {
+        document
+          .querySelectorAll(".cat-card")
+          .forEach((c) => c.classList.remove("selected"));
+        el.classList.add("selected");
+        selectedCat = cat;
+        updatePrice();
+      }
+
+      // ── PILL SELECT ──
+      function selectPill(el, speed) {
+        document
+          .querySelectorAll(".pill")
+          .forEach((p) => p.classList.remove("selected"));
+        el.classList.add("selected");
+        selectedSpeed = speed;
+        updatePrice();
+      }
+
+      // ── UPDATE PRICE ──
+      function updatePrice() {
+        const surcharge = catSurcharge[selectedCat] || 0;
+        const mult = speedMultiplier[selectedSpeed] || 1;
+        const base = Math.round(basePrice * mult);
+        const dist = Math.round(distPrice * mult);
+        const total = base + dist + surcharge;
+        document.getElementById("base-fare").textContent = "₹" + base;
+        document.getElementById("dist-fare").textContent = "₹" + dist;
+        document.getElementById("cat-fare").textContent = "₹" + surcharge;
+        document.getElementById("total-fare").textContent = "₹" + total;
+      }
+
+      // ── BOOK DELIVERY ──
+      function bookDelivery() {
+        const pickup = document.getElementById("pickup-addr").value.trim();
+        const drop = document.getElementById("drop-addr").value.trim();
+        if (!pickup || !drop) {
+          showToast(
+            "⚠️ Address Required",
+            "Please fill both pickup and drop-off addresses.",
+          );
+          return;
+        }
+        document.getElementById("book-btn").disabled = true;
+        document.getElementById("book-btn").textContent = "⏳ Booking...";
+        document.getElementById("finding-overlay").classList.add("show");
+
+        setTimeout(() => {
+          document.getElementById("finding-overlay").classList.remove("show");
+          document.getElementById("driver-on-map").style.display = "block";
+          document.getElementById("tracking-overlay").classList.add("show");
+          showToast(
+            "✅ Driver Found!",
+            "Rahul Verma is heading to your pickup location.",
+          );
+          document.getElementById("book-btn").textContent = "📍 Track Delivery";
+          document.getElementById("book-btn").onclick = () => {};
+          startTracking();
+        }, 3000);
+      }
+
+      // ── TRACKING SIMULATION ──
+      function startTracking() {
+        const steps = [
+          { text: "Pickup In Progress", eta: "8 min", stepActive: 2 },
+          { text: "Parcel Picked Up", eta: "14 min", stepActive: 3 },
+          { text: "Out For Delivery", eta: "6 min", stepActive: 3 },
+          { text: "Delivered! 🎉", eta: "Arrived", stepActive: 4 },
+        ];
+        const positions = [
+          [230, 360],
+          [290, 320],
+          [370, 270],
+          [440, 210],
+        ];
+        let idx = 0;
+
+        trackTimer = setInterval(() => {
+          if (idx >= steps.length) {
+            clearInterval(trackTimer);
+            return;
+          }
+          const s = steps[idx];
+          document.getElementById("track-status-text").textContent = s.text;
+          document.getElementById("eta-badge").textContent = "ETA: " + s.eta;
+
+          // Update driver marker position
+          const [x, y] = positions[idx];
+          document
+            .getElementById("driver-on-map")
+            .setAttribute("transform", `translate(${x},${y})`);
+
+          // Update step circles
+          for (let i = 1; i <= 4; i++) {
+            const circle = document.getElementById("step" + i);
+            const label = circle.nextElementSibling;
+            if (i < s.stepActive) {
+              circle.className = "step-circle done";
+              circle.textContent = "✓";
+              label.className = "step-label done";
+            } else if (i === s.stepActive) {
+              circle.className = "step-circle active";
+              circle.textContent = i;
+              label.className = "step-label active";
+            } else {
+              circle.className = "step-circle";
+              circle.textContent = i;
+              label.className = "step-label";
+            }
+          }
+          for (let i = 1; i <= 3; i++) {
+            const line = document.getElementById("line" + i);
+            line.className = i < s.stepActive ? "step-line done" : "step-line";
+          }
+
+          if (idx === steps.length - 1) {
+            document.getElementById("track-status-text").style.color =
+              "var(--green)";
+            clearInterval(trackTimer);
+          }
+          idx++;
+        }, 4000);
+      }
+
+      // ── DRIVER: TOGGLE ONLINE ──
+      function toggleOnline(el) {
+        isOnline = el.checked;
+        document.getElementById("online-label").textContent = isOnline
+          ? "Online"
+          : "Offline";
+        document.getElementById("drv-status-map").textContent = isOnline
+          ? "Active"
+          : "Offline";
+        document.getElementById("drv-status-map").style.fill = isOnline
+          ? "#22c55e"
+          : "#5a5855";
+        if (!isOnline) {
+          showToast(
+            "😴 Gone Offline",
+            "You will not receive new delivery requests.",
+          );
+        } else {
+          showToast(
+            "🟢 Back Online",
+            "You are now receiving delivery requests.",
+          );
+        }
+      }
+
+      // ── DRIVER: ACCEPT DELIVERY ──
+      function acceptDelivery(reqId) {
+        const card = document.getElementById(reqId);
+        card.style.opacity = "0.4";
+        card.style.pointerEvents = "none";
+        card.querySelector(".req-actions").innerHTML =
+          '<span style="font-size:0.8rem;color:var(--green);font-weight:600;">✓ Accepted</span>';
+        document.getElementById("active-delivery-card").classList.add("show");
+        showToast(
+          "🚀 Order Accepted!",
+          "Navigate to pickup point. Customer is waiting.",
+        );
+        document.getElementById("notif-count").style.display = "none";
+      }
+
+      // ── DRIVER: DECLINE ──
+      function declineDelivery(reqId) {
+        const card = document.getElementById(reqId);
+        card.style.transition = "all 0.3s";
+        card.style.opacity = "0";
+        card.style.transform = "translateX(20px)";
+        setTimeout(() => card.remove(), 300);
+      }
+
+      // ── NAVIGATE ──
+      function openNav() {
+        showToast(
+          "🗺️ Navigation Started",
+          "Opening route to pickup: Dharampeth",
+        );
+      }
+
+      // ── TOAST ──
+      function showToast(title, msg) {
+        const t = document.getElementById("toast");
+        document.getElementById("toast-title").textContent = title;
+        document.getElementById("toast-msg").textContent = msg;
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 3500);
+      }
+
+      // ── INIT ──
+      updatePrice();
+      setTimeout(
+        () =>
+          showToast(
+            "📦 2 New Requests",
+            "New delivery requests near your location!",
+          ),
+        1500,
+      );
+    </script>
+  </body>
+</html>
